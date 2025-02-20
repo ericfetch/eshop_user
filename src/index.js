@@ -1,13 +1,17 @@
 import './index.less'
+// 添加图片资源导入
+const img_user_cart = 'https://assets.ericengineer.com/i/2025/02/19/cart.png'
+const img_user_more = 'https://assets.ericengineer.com/i/2025/02/19/more.png'
+
 export default class EshopUser {
-    state = {
+    _state = {
         user: null,
         token: null
     }
     constructor(params) {
         this._params = params;
         this._container = params.root;
-        this.onInit = params.onInit || function () { };
+        this._onInit = params.onInit || function () { };
         this._init()
     }
 
@@ -18,7 +22,7 @@ export default class EshopUser {
             if (this._container) {
                 this._render()
             }
-            this.onInit(this.state)
+            this._onInit(this._state)
             return;
         }
         const cookies = {}
@@ -40,13 +44,13 @@ export default class EshopUser {
                     throw new Error('Network response was not ok');
                 }
             }).then(data => {
-                this.state.user = data;
-                this.state.token = token;
+                this._state.user = data;
+                this._state.token = token;
                 // 获取用户信息成功，触发init事件
                 if (this._container) {
                     this._render()
                 }
-                this.onInit(this.state)
+                this._onInit(this._state)
 
             }).catch(error => {
                 console.error('Error:', error);
@@ -56,89 +60,205 @@ export default class EshopUser {
                 this._render()
             }
             // 未登录，触发init事件
-            this.onInit(this.state)
+            this._onInit(this._state)
 
         }
         console.log('EshopUser initialized...');
     }
 
+    // 添加DOM创建的辅助方法
+    _createElement(options) {
+        const {
+            tag = 'div',
+            className = '',
+            text = '',
+            children = [],
+            attrs = {},
+            events = {},
+        } = options;
+
+        const element = document.createElement(tag);
+        
+        // 添加类名
+        if (className) {
+            element.className = className;
+        }
+        
+        // 添加文本
+        if (text) {
+            element.textContent = text;
+        }
+        
+        // 添加属性
+        Object.entries(attrs).forEach(([key, value]) => {
+            element.setAttribute(key, value);
+        });
+        
+        // 添加事件
+        Object.entries(events).forEach(([event, handler]) => {
+            element.addEventListener(event, handler);
+        });
+        
+        // 添加子元素
+        children.forEach(child => {
+            element.appendChild(child);
+        });
+        
+        return element;
+    }
+
     _render() {
-        // 渲染UI
-        const domWrapper = document.createElement('div');
-        domWrapper.classList.add('user-login');
+        const domWrapper = this._createElement({ className: 'user-login' });
 
-        if (this.state.user) {
-            domWrapper.innerHTML = `
-            <div class="user-base-info">
-                <div class='avatar'>
-                    <img src="https://assets.ericengineer.com/i/2025/02/19/npvpq4.png" alt="" />
-                </div>
-                <div>
-                    <div class="name">hi~晚上好</div>
-                    <div class="sub-title">注册</div>
-                </div>
-            </div>
-            <div class="tips">
-                <div class="title">
-                    登入購物平臺後更多優惠
-                </div>
-                <div class="sub-title">登入可享，專屬優惠，貼心推薦！</div>
-            </div>
+        if (this._state.user) {
+            // 创建用户基本信息
+            const avatarImg = this._createElement({
+                tag: 'img',
+                attrs: {
+                    src: 'https://assets.ericengineer.com/i/2025/02/19/npvpq4.png',
+                    alt: ''
+                }
+            });
 
-            <div className="actions">
-            <div className="action-item">
-              <img src={img_user_cart} alt="" />
-              <div>购物车</div>
-            </div>
-            <div className="action-item">
-              <img src={img_user_more} alt="" />
-              <div>购物车</div>
-            </div>
-            <div className="action-item">
-              <img src={img_user_more} alt="" />
-              <div>购物车</div>
-            </div>
-            <div className="action-item">
-              <img src={img_user_more} alt="" />
-              <div>购物车</div>
-            </div>
-            <div className="action-item">
-              <img src={img_user_more} alt="" />
-              <div>购物车</div>
-            </div>
-            <div className="action-item">
-              <img src={img_user_more} alt="" />
-              <div>购物车</div>
-            </div>
-          </div>
-            
-            
-            `
+            const avatar = this._createElement({
+                className: 'avatar',
+                children: [avatarImg]
+            });
+
+            const userInfo = this._createElement({
+                children: [
+                    this._createElement({
+                        className: 'name',
+                        text: `hi~${this._state.user.name || '晚上好'}`
+                    }),
+                    this._createElement({
+                        className: 'sub-title',
+                        text: this._state.user.level || '普通会员'
+                    })
+                ]
+            });
+
+            const userBaseInfo = this._createElement({
+                className: 'user-base-info',
+                children: [avatar, userInfo]
+            });
+
+            // 创建提示区域
+            const tips = this._createElement({
+                className: 'tips',
+                children: [
+                    this._createElement({
+                        className: 'title',
+                        text: '登入購物平臺後更多優惠'
+                    }),
+                    this._createElement({
+                        className: 'sub-title',
+                        text: '登入可享，專屬優惠，貼心推薦！'
+                    })
+                ]
+            });
+
+            // 创建操作区域
+            const actionItems = [
+                { img: img_user_cart, text: '购物车' },
+                { img: img_user_more, text: '我的订单' },
+                { img: img_user_more, text: '我的收藏' },
+                { img: img_user_more, text: '优惠券' },
+                { img: img_user_more, text: '我的积分' },
+                { img: img_user_more, text: '设置' }
+            ];
+
+            const actions = this._createElement({
+                className: 'actions',
+                children: actionItems.map(item => 
+                    this._createElement({
+                        className: 'action-item',
+                        children: [
+                            this._createElement({
+                                tag: 'img',
+                                attrs: {
+                                    src: item.img,
+                                    alt: item.text
+                                }
+                            }),
+                            this._createElement({
+                                text: item.text
+                            })
+                        ],
+                        events: {
+                            click: () => {
+                                console.log(`${item.text} clicked`);
+                                // 在这里添加点击处理逻辑
+                            }
+                        }
+                    })
+                )
+            });
+
+            domWrapper.append(userBaseInfo, tips, actions);
         } else {
-            domWrapper.innerHTML = `
-             <div class="user-base-info">
-                <div class='avatar'>
-                    <img src="https://assets.ericengineer.com/i/2025/02/19/npvpq4.png" alt="" />
-                </div>
-                <div>
-                    <div class="name">hi~晚上好</div>
-                    <div class="sub-title">注册</div>
-                </div>
-            </div>
-            <div class="tips">
-                <div class="title">
-                    登入購物平臺後更多優惠
-                </div>
-                <div class="sub-title">登入可享，專屬優惠，貼心推薦！</div>
-            </div>
-            <div class="action">
-                立即登入
-            </div>
-            `
+            // 未登录状态
+            const avatarImg = this._createElement({
+                tag: 'img',
+                attrs: {
+                    src: 'https://assets.ericengineer.com/i/2025/02/19/npvpq4.png',
+                    alt: ''
+                }
+            });
+
+            const avatar = this._createElement({
+                className: 'avatar',
+                children: [avatarImg]
+            });
+
+            const userInfo = this._createElement({
+                children: [
+                    this._createElement({
+                        className: 'name',
+                        text: 'hi~晚上好'
+                    }),
+                    this._createElement({
+                        className: 'sub-title',
+                        text: '注册'
+                    })
+                ]
+            });
+
+            const userBaseInfo = this._createElement({
+                className: 'user-base-info',
+                children: [avatar, userInfo]
+            });
+
+            const tips = this._createElement({
+                className: 'tips',
+                children: [
+                    this._createElement({
+                        className: 'title',
+                        text: '登入購物平臺後更多優惠'
+                    }),
+                    this._createElement({
+                        className: 'sub-title',
+                        text: '登入可享，專屬優惠，貼心推薦！'
+                    })
+                ]
+            });
+
+            const action = this._createElement({
+                className: 'action',
+                text: '立即登入',
+                events: {
+                    click: () => {
+                        console.log('登录按钮被点击');
+                        // 在这里添加登录逻辑
+                    }
+                }
+            });
+
+            domWrapper.append(userBaseInfo, tips, action);
         }
 
-
-        this._container.appendChild(domWrapper)
+        this._container.appendChild(domWrapper);
     }
+    
 
 }
